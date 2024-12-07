@@ -1,0 +1,134 @@
+CLI içinde IP adresi, netmask, hostname değişimi
+
+- nmtui
+
+Lokalde oluşturulan sanal makinenin ip adresi tanımlandıktn sonra ssh ile ana makineden sanal makineye bağlanma
+
+- nano /etc/resolv.conf - DNS
+- nano /etc/hosts - hostname
+
+DNS'e sanal makinenin bulunduğu kök ip örn 192.168.1.1
+hosts dosyasına sanal makinenin hostname'i ve adı örn "srv1.ornek.net    srv1"
+
+YUM'a repository ekleme
+
+/etc/yum.repos.d/ içine vim ile dosyaadı.repo dosyası açılır:
+
+[base]
+name=base
+baseurl=http://content.example.com/rhel9.0/x86_64/dvd/BaseOS
+gpgcheck=0
+
+[app]
+name=app
+baseurl=http://content.example.com/rhel9.0/x86_64/dvd/AppStream
+gpgcheck=0
+
+örneği gibi doldurulabilir.
+
+SELinux durumu almak için
+
+- sestatus
+- sestatus -v
+
+komutları kullanılabilir.
+
+SELinux'un semanage aracını kullanırken, "ValueError: SELinux policy is not managed or store cannot be accessed." hatası ile karşılaştıysan, semanage'i kullanmaya çalıştığın paket yüklü olmayabilir veya policy deposu oluşturulmamış/güncel olmayabilir.
+
+Örneğin, semanage port -l | grep 80 komutunu girdiğimde bana 80'li portları listelemesi gerekirken hata ile karşılaştıysam,
+ilk önce "bind" paketinin yüklü olduğundan emin olmalıyım eğer kurduktan sonra yine çalışmıyorsa policy deposunu oluşturmalı/onarmalıyım.
+Komutu:
+
+- sudo semodule -DB <- Bu komuttan sonra anında çalışmıştı.
+- sudo semodule -B
+
+Eğer halen çalışmıyorsa SELinux'u yönetilebilir hale getir.
+
+- sudo setenforce 1
+SELinux'u enforcing moda geçirir ve politika yönetimini etkinleştirir.
+
+semanage ile port ayarlama
+
+- semanage port -a -t http_port_t -p tcp 82
+
+Bu komut http portları içerisine 82 portunu ekler.
+
+Kullanıcı grubu ekleme komutu
+
+- groupadd %kullanıcıadı%
+
+Kullanıcı oluşturup gruba ekleme komutu
+
+- useradd -G %grup% %kullanıcı%
+
+non-interactive shell'li kullanıcı oluşturmalı
+
+- useradd -s /sbin/nologin %kullanıcıadı%
+
+Kullanıcı parolası oluşturma
+
+- passwd %kullanıcıadı%
+
+Herhangi bir kullanıcıya sudo parolası sormadan komut girme erişimi verme
+
+- visudo
+- ## Allows people in group wheel to run all commands
+%wheel  ALL=(ALL)       ALL
+
+kısmına gelip altına,
+
+- user ALL=ALL <- Tüm komutlara erişim sudo parolasıyla
+- user ALL=(ALL) NOPASSWD: ALL <- Tüm komutlara erişim parolasız
+- user ALL=(ALL) NOPASSWD: /usr/bin/passwd <- Sadece passwd komutuna şifresiz erişim
+
+Klasörün sahipliğini bir kullanıcı grubuna atama
+
+- chgrp grup /klasör
+
+Klasörün okuma,yazma ve ulaşılabilirliğini sadece bir gruba verme
+
+- chmod 2770 /klasör
+
+Sunucudaki kullanıcıları listeleme
+
+- cat /etc/passwd
+
+Crontab oluşturma
+
+- crontab -e -u kullanıcı
+           ^  L kullaıcı anahtarı
+        düzenle veya onuştur anahtarı
+
+- crontab -r # Crontab sil
+- crontab -u kullanıcı -l # Crontabı önizle
+- crontab -u kullanıcı -e # Kullanıcının crotab'ını düzenle
+- systemctl restart crond # Crontab düzenledikten sonra uygulaması için yeniden başlat
+
+crontab editör örnekleri
+
+*       *       *       *       *   kullanıcı   komut
+|       |       |       |       |
+|       |       |       |       L Haftanın Günü
+|       |       |       L Ay
+|       |       L Ay'ın haftası
+|       L Saati
+L Dakikası
+
+# Her ay
+@monthly komut
+# Her gece
+@midnight komut # Her gün komutuyla aynı
+# Her gün
+@daily komut
+0   0   *   *   * komut
+# Her hafta
+@weekly komut
+# Her saat
+@hourly komut
+# Her reboot
+@reboot komut
+# Her 6 saatte
+0   */6     *   *   * komut
+# Her 5 dakikada
+*/5 *   *   *   * komut
+

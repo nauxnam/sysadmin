@@ -1,0 +1,44 @@
+LINUX FILE STRUCTURE
+
+/ (root - parent dir)
+
+/bin        \
+             > User Commands
+/usr/bin    /
+/sbin       \
+             > Admin Commands
+/usr/sbin   /
+/etc        > System & network config files
+/usr        > Man pages & docs
+/lib        > Modules (C, C++)
+/var        > System log files
+/opt        > Third-party packages
+/tmp        > Temporary files
+/devices    > Physical devics (kernel reference)
+
+BOOT PROCESS
+
+BIOS / PROM
+    |
+MASTER BOOT RECORD (MBR)
+    |
+PARTITION TABLE (PT)
+    |
+BOOT LOADER (GRUB)
+    |
+KERNEL (CORE OS FILES)
+    |
+/ /usr (R-O MODE)
+    |
+/etc /inittab (DEFAULT RUN LEVEL)
+    |
+/etc/fstab (MOUNT)
+
+RUN LEVELS IN LINUX
+
+RUN LEVEL 0: POWER OFF
+RUN LEVEL 1: SINGLE USER MODE WITH TEXT MODE
+RUN LEVEL 2: MULTIUSER MODE WITH TEXT MODE SUPPORTS ALL SERVICES EXCEPT NFS & NIS
+RUN LEVEL 3: MULTIUSER TEXT MODE. SUPPORTS ALL SERVICES
+RUN LEVEL 4: UNUSED (FOR FUTURE USE)
+RUN LEVEL 5: MUTLIUSER WITH GRAPHIC MODE. SUPPORTS ALL SERVICES
