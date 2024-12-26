@@ -1,0 +1,7 @@
+# SCHEDULE A CRON JOB USING YOUR BASH SCRIPT
+
+crontab -e
+
+# Add a line to run the script daily at midnight:
+
+0 0 * * * /path/to/script.sh

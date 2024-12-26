@@ -1,37 +1,40 @@
-CLI içinde IP adresi, netmask, hostname değişimi
+### RHEL RHCSA EX200 EXAM PREPARATION NOTES ###
+
+1.0 - IP ADDRESS, HOSTNAME, NETMASK CHANGE THROUGH CLI
 
 - nmtui
 
-Lokalde oluşturulan sanal makinenin ip adresi tanımlandıktn sonra ssh ile ana makineden sanal makineye bağlanma
+1.1 - TO SPEED UP THE PROCESS DEFINE SERVER TO HOST DNS, HOST FILE FOR SSH CONNECTION
 
-- nano /etc/resolv.conf - DNS
-- nano /etc/hosts - hostname
+- vim /etc/resolv.conf - DNS
+- vim /etc/hosts - hostname
 
-DNS'e sanal makinenin bulunduğu kök ip örn 192.168.1.1
-hosts dosyasına sanal makinenin hostname'i ve adı örn "srv1.ornek.net    srv1"
+VIRTUAL MACHINE EXAMPLE BROADCAST 192.168.1.1
+HOSTS EXAMPLE "srv1.example.net    srv1"
 
-YUM'a repository ekleme
+2.0 - ADDING A REPOSITORY TO YUM
 
-/etc/yum.repos.d/ içine vim ile dosyaadı.repo dosyası açılır:
+CREATE A FILE "example.repo" TO /etc/yum.repos.d/:
 
-[base]
-name=base
-baseurl=http://content.example.com/rhel9.0/x86_64/dvd/BaseOS
-gpgcheck=0
+# example.repo:
+        [base]
+        name=base
+        baseurl=http://content.example.com/rhel9.0/x86_64/dvd/BaseOS
+        gpgcheck=0
+        enabed=1
 
-[app]
-name=app
-baseurl=http://content.example.com/rhel9.0/x86_64/dvd/AppStream
-gpgcheck=0
+        [app]
+        name=app
+        baseurl=http://content.example.com/rhel9.0/x86_64/dvd/AppStream
+        gpgcheck=0
+        enabled=1
 
-örneği gibi doldurulabilir.
 
-SELinux durumu almak için
+3.0 - SELinux STATUS OUTPUT
 
 - sestatus
 - sestatus -v
 
-komutları kullanılabilir.
 
 SELinux'un semanage aracını kullanırken, "ValueError: SELinux policy is not managed or store cannot be accessed." hatası ile karşılaştıysan, semanage'i kullanmaya çalıştığın paket yüklü olmayabilir veya policy deposu oluşturulmamış/güncel olmayabilir.
 
@@ -131,4 +134,101 @@ L Dakikası
 0   */6     *   *   * komut
 # Her 5 dakikada
 */5 *   *   *   * komut
+
+
+firewall-cmd zone listeleme
+
+- firewall-cmd --get-zones
+
+zone içindeki servisleri/portları listeleme
+
+- firewall-cmd --list-all -zone=%zone%
+
+Server içindeki bir servise ait portları listeleme
+
+- rpcinfo -p # Tüm portlar
+
+- rpcinfo -p | grep nfs # nfs servisinin portlarını listeleme
+
+NFS SERVER SETUP
+
+
+- dnf install nfs autofs # to client and server machine
+- systemctl enable --now nfs-server rpcbind
+- systemctl start nfs-server rpcbind
+
+IN SERVER:
+
+CREATE A SHARED FILE
+
+- mkdir -p /mnt/nfs/share
+- chown -R nobody:nobody /mnt/nfs/share
+- chmod -R 755 /mnt/nfs/share
+
+EDIT EXPORTS FILE
+
+- vim /etc/exports:
+        /mnt/nfs/share 192.168.1.0/24(rw,no_root_squash,no_subtree_check)
+EXPORT THE SHARED DIRECTORY
+- exportfs -arv
+
+ALLOW NFS THROUGH FIREWALL
+
+- firewall-cmd --permanent --add-service=nfs
+- firewall-cmd --permanent --add-service=mountd
+- firewall-cmd --permanent --add-service=rpc-bind
+- firewall-cmd --reload
+
+ON THE NFS CLIENT
+
+CREATE SHARED DIRECTORY
+
+- mkdir -p /mnt/nfs_share
+
+MOUNT FROM THE SERVER
+
+- mount -t nfs 192.168.1.106:/mnt/nfs/share /mnt/nfs_share
+        REPLACE IP ADDRESS TO YOUR SERVER ADDRESS.
+
+VERIFY THE MOUNT
+
+- df -h
+
+TESTING THE NFS SETUP
+
+echo "NFS test file" | tee /mnt/share/test.txt
+
+- CLIENT
+
+- cat /mnt/nfs_share/test.txt
+
+
+/etc/ klasörünü .bzip2 uzantısı ile tar arşivi oluşturma
+
+"myetcbackup.tar" /root klasörü içinde olacak
+
+tar ile alakalı daha fazla bilgi için manpage bakılabilir
+
+tar -cvjf myetcbackup.tar.bz2 /etc/
+
+
+Bir dosyayı kullanıcıya göre erişim ayarlama
+
+- setfacl -m u:natasha:rw- /dosya # natasha kullanıcısına okuma yazma erişimi verme (execution kapalı)
+- setfacl -m u:harry:--- /dosya # harry kullanıcısının dosyaya hiçbir erişimi yok.
+- getfacl /dosya # Dosyanın sahiplik bilgilerini listeleme
+
+FIND ALL USER'S FILES AND COPY IT TO SPECIFIED FOLDER
+
+- find / -user user -exec cp -rf {} /root/userfiles/
+
+CREATE SCRIPT FOR FIND ALL "ich" STRINGS IN /usr/share/dict/words
+
+#!/bin/bash
+
+grep ich /usr/share/dict/words
+
+CREATE A USER WITH UUID
+
+- useradd -u 2334 username
 
